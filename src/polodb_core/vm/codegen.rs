@@ -1,4 +1,5 @@
 use polodb_bson::{Value, Document};
+use super::inverse::inverse_doc;
 use crate::vm::SubProgram;
 use crate::vm::op::DbOp;
 use crate::{DbResult, DbErr};
@@ -209,8 +210,12 @@ impl Codegen {
         Ok(())
     }
 
-    fn emit_query_tuple(&mut self, key: &str, value: &Value, get_field_failed_location: u32, not_found_branch: u32) -> DbResult<()> {
-        if key.chars().nth(0).unwrap() == '$' {
+    fn emit_query_tuple(&mut self,
+                        key: &str,
+                        value: &Value,
+                        get_field_failed_location: u32,
+                        not_found_branch: u32) -> DbResult<()> {
+        if key.chars().next().unwrap() == '$' {
             match key {
                 "$and" => {
                     unimplemented!()
@@ -218,6 +223,15 @@ impl Codegen {
 
                 "$or" => {
                     unimplemented!()
+                }
+
+                "$not" => {
+                    let sub_doc = try_unwrap_document!("$not", value);
+                    let inverse_doc = inverse_doc(sub_doc)?;
+                    return self.emit_query_tuple_document(
+                        key, &inverse_doc,
+                        get_field_failed_location, not_found_branch
+                    );
                 }
 
                 _ => {

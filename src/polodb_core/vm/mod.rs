@@ -1,6 +1,7 @@
 mod op;
 mod subprogram;
 mod codegen;
+mod inverse;
 
 pub(crate) use subprogram::SubProgram;
 
